@@ -31,36 +31,15 @@ document.addEventListener(RENDER_EVENT, () => {
 });
 
 document.addEventListener(SAVED_EVENT, () => {
-  const elementCustomAlert = document.createElement("div");
-  elementCustomAlert.classList.add("alert");
-  elementCustomAlert.innerText = "Berhasil Disimpan!";
-
-  document.body.insertBefore(elementCustomAlert, document.body.children[0]);
-  setTimeout(() => {
-    elementCustomAlert.remove();
-  }, 2000);
+  displayAlert("Berhasil Disimpan!", "success");
 });
 
 document.addEventListener(MOVED_EVENT, () => {
-  const elementCustomAlert = document.createElement("div");
-  elementCustomAlert.classList.add("alert");
-  elementCustomAlert.innerText = "Berhasil Dipindahkan!";
-
-  document.body.insertBefore(elementCustomAlert, document.body.children[0]);
-  setTimeout(() => {
-    elementCustomAlert.remove();
-  }, 2000);
+  displayAlert("Berhasil Dipindahkan!", "info");
 });
 
 document.addEventListener(DELETED_EVENT, () => {
-  const elementCustomAlert = document.createElement("div");
-  elementCustomAlert.classList.add("alert");
-  elementCustomAlert.innerText = "Berhasil Dihapus!";
-
-  document.body.insertBefore(elementCustomAlert, document.body.children[0]);
-  setTimeout(() => {
-    elementCustomAlert.remove();
-  }, 2000);
+  displayAlert("Berhasil Dihapus!", "danger");
 });
 
 const loadDataFromStorage = () => {
@@ -104,25 +83,18 @@ const addBook = () => {
   const bookAuthor = document.getElementById("penulis");
   const bookYear = document.getElementById("tahun");
   const bookHasFinished = document.getElementById("isRead");
-  let bookStatus;
-
-  if (bookHasFinished.checked) {
-    bookStatus = true;
-  } else {
-    bookStatus = false;
-  }
 
   books.push({
     id: +new Date(),
     title: bookTitle.value,
     author: bookAuthor.value,
     year: Number(bookYear.value),
-    isComplete: bookStatus,
+    isComplete: bookHasFinished.checked,
   });
 
-  bookTitle.value = null;
-  bookAuthor.value = null;
-  bookYear.value = null;
+  bookTitle.value = "";
+  bookAuthor.value = "";
+  bookYear.value = "";
   bookHasFinished.checked = false;
 
   document.dispatchEvent(new Event(RENDER_EVENT));
@@ -151,40 +123,40 @@ const makeBookElement = (bookObject) => {
   container.setAttribute("id", `book-${bookObject.id}`);
 
   if (bookObject.isComplete) {
-    const returnBtn = document.createElement("button");
-    returnBtn.classList.add("kembalikan-btn");
-    returnBtn.innerHTML = `<i class='bx bx-undo'></i>`;
+    const returnBtn = createButton(
+      "kembalikan-btn",
+      "<i class='bx bx-undo'></i>",
+      () => {
+        returnBookFromFinished(bookObject.id);
+      }
+    );
 
-    returnBtn.addEventListener("click", () => {
-      returnBookFromFinished(bookObject.id);
-    });
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.classList.add("hapus-btn");
-    deleteBtn.innerHTML = `<i class='bx bx-trash'></i>`;
-
-    deleteBtn.addEventListener("click", () => {
-      deleteBook(bookObject.id);
-    });
+    const deleteBtn = createButton(
+      "hapus-btn",
+      "<i class='bx bx-trash'></i>",
+      () => {
+        deleteBook(bookObject.id);
+      }
+    );
 
     actionContainer.append(returnBtn, deleteBtn);
     container.append(actionContainer);
   } else {
-    const finishBtn = document.createElement("button");
-    finishBtn.classList.add("selesai-btn");
-    finishBtn.innerHTML = `<i class='bx bx-check'></i>`;
+    const finishBtn = createButton(
+      "selesai-btn",
+      "<i class='bx bx-check'></i>",
+      () => {
+        addBookToFinished(bookObject.id);
+      }
+    );
 
-    finishBtn.addEventListener("click", () => {
-      addBookToFinished(bookObject.id);
-    });
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.classList.add("hapus-btn");
-    deleteBtn.innerHTML = `<i class='bx bx-trash'></i>`;
-
-    deleteBtn.addEventListener("click", () => {
-      deleteBook(bookObject.id);
-    });
+    const deleteBtn = createButton(
+      "hapus-btn",
+      "<i class='bx bx-trash'></i>",
+      () => {
+        deleteBook(bookObject.id);
+      }
+    );
 
     actionContainer.append(finishBtn, deleteBtn);
     container.append(actionContainer);
@@ -223,24 +195,24 @@ const deleteBook = (bookId) => {
   deleteData();
 };
 
-const findBook = (bookId) => {
-  for (const bookItem of books) {
-    if (bookItem.id === bookId) {
-      return bookItem;
-    }
-  }
+const findBook = (bookId) => books.find((book) => book.id === bookId);
 
-  return null;
+const findBookIndex = (bookId) => books.findIndex((book) => book.id === bookId);
+
+const createButton = (buttonClass, innerHTML, eventListener) => {
+  const button = document.createElement("button");
+  button.classList.add(buttonClass);
+  button.innerHTML = innerHTML;
+  button.addEventListener("click", eventListener);
+  return button;
 };
 
-const findBookIndex = (bookId) => {
-  for (const index in books) {
-    if (books[index].id === bookId) {
-      return index;
-    }
-  }
-
-  return -1;
+const displayAlert = (message, type) => {
+  const alertBox = document.createElement("div");
+  alertBox.className = `alert alert-${type}`;
+  alertBox.innerText = message;
+  document.body.appendChild(alertBox);
+  setTimeout(() => alertBox.remove(), 2000);
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -271,12 +243,12 @@ const searchBook = () => {
   const searchInput = document.getElementById("pencarian").value.toLowerCase();
   const bookItems = document.getElementsByClassName("item");
 
-  for (let i = 0; i < bookItems.length; i++) {
-    const itemTitle = bookItems[i].querySelector(".item-title");
+  Array.from(bookItems).forEach((item) => {
+    const itemTitle = item.querySelector(".item-title");
     if (itemTitle.textContent.toLowerCase().includes(searchInput)) {
-      bookItems[i].classList.remove("hidden");
+      item.classList.remove("hidden");
     } else {
-      bookItems[i].classList.add("hidden");
+      item.classList.add("hidden");
     }
-  }
+  });
 };
